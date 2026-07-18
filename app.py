@@ -5,71 +5,68 @@ import requests
 
 app = Flask(__name__)
 
-# API Anahtarınız (Hem doğrudan koda eklendi hem de güvenli çevre değişkeniyle uyumlu hale getirildi)
+# SerpApi Anahtarınız
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643")
 
-def google_rank_checker(keyword, target_domain, max_results=200):
-    results = []
-    rank = 1
+def google_rank_checker(keyword, target_domain):
+    pages_data = []  # Sayfa sayfa gruplanmış verileri tutacak
+    global_rank = 1
     clean_target = target_domain.replace("https://", "").replace("http://", "").replace("www.", "").lower().strip()
     target_rank = None
 
-    if not SERPAPI_KEY or SERPAPI_KEY == "BURAYA_API_ANAHTARINIZI_YAZIN":
+    if not SERPAPI_KEY:
         return [], None
 
-    # 200 sonuç için 100'er adet getiren 2 sayfa isteği yapıyoruz (Çok hızlı ve stabil)
-    pages = [0, 100]
-
-    for start in pages:
+    # Tam olarak 1. sayfadan 20. sayfaya kadar tek tek döngü kuruyoruz
+    for page_num in range(1, 21):
+        start = (page_num - 1) * 10
         url = "https://serpapi.com/search.json"
         params = {
             "q": keyword,
             "engine": "google",
-            "hl": "tr",        # Türkçe dil desteği
-            "gl": "tr",        # Türkiye arama sonuçları
-            "num": 100,
-            "start": start,
+            "hl": "tr",        # Türkçe dil seçeneği
+            "gl": "tr",        # Türkiye lokasyonu
+            "num": 10,         # Her sayfada kesinlikle 10 arama sonucu
+            "start": start,    # Sayfa başlangıç indeksi (0, 10, 20... 190)
             "api_key": SERPAPI_KEY
         }
 
+        page_items = []
         try:
-            response = requests.get(url, params=params, timeout=20)
-            if response.status_code != 200:
-                print(f"SerpApi Hatası: {response.status_code}")
-                break
+            response = requests.get(url, params=params, timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                organic_results = data.get("organic_results", [])
 
-            data = response.json()
-            organic_results = data.get("organic_results", [])
+                for item in organic_results:
+                    title = item.get("title", "")
+                    href = item.get("link", "")
+                    
+                    if href:
+                        is_target = clean_target in href.lower()
 
-            if not organic_results:
-                break
+                        if is_target and target_rank is None:
+                            target_rank = global_rank
 
-            for item in organic_results:
-                title = item.get("title", "")
-                href = item.get("link", "")
-                
-                if href:
-                    is_target = clean_target in href.lower()
-
-                    if is_target and target_rank is None:
-                        target_rank = rank
-
-                    results.append({
-                        "rank": rank,
-                        "title": title,
-                        "url": href,
-                        "is_target": is_target
-                    })
-                    rank += 1
-
-                    if len(results) >= max_results:
-                        return results, target_rank
-
+                        page_items.append({
+                            "global_rank": global_rank,
+                            "title": title,
+                            "url": href,
+                            "is_target": is_target
+                        })
+                        global_rank += 1
+            else:
+                print(f"{page_num}. Sayfa Çekilemedi. HTTP Kodu: {response.status_code}")
         except Exception as e:
-            print(f"API Bağlantı Hatası: {e}")
-            break
+            print(f"{page_num}. Sayfada Bağlantı Hatası: {e}")
+        
+        # Her sayfanın sonucunu (boş olsa bile) listeye ekliyoruz ki arayüzde sayfa blokları oluşsun
+        pages_data.append({
+            "page_num": page_num,
+            "items": page_items
+        })
 
-    return results, target_rank
+    return pages_data, target_rank
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -85,17 +82,12 @@ def index():
         keyword = request.form.get("keyword", "").strip()
         searched = True
 
-        if not SERPAPI_KEY:
-            status_message = "API anahtarı bulunamadı."
-        elif domain and keyword:
-            results, target_rank = google_rank_checker(keyword, domain, 200)
+        if domain and keyword:
+            results, target_rank = google_rank_checker(keyword, domain)
             
             if not results:
-                status_message = "Google araması gerçekleştirilemedi veya API kotanız bitti."
-            elif len(results) < 200:
-                status_message = f"Google üzerinde toplam {len(results)} sonuç bulunabildi."
+                status_message = "Google sonuçları çekilemedi. Lütfen API anahtarınızı kontrol edin."
 
-    # Girinti hatası tamamen düzeltildi, site artık sorunsuz açılacak
     return render_template(
         "index.html",
         results=results,
