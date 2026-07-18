@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEO Sıra Bulucu Araç</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
 
-    <!-- Header -->
     <header class="bg-white border-b border-gray-200 py-4 shadow-sm">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
@@ -26,13 +24,11 @@
     </header>
 
     <main class="container mx-auto px-4 py-8 max-w-6xl">
-        <!-- Başlık Bölümü -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Google Sıra Bulucu</h1>
-            <p class="text-gray-500 text-sm">Web sitenizin hedef anahtar kelimede Google'daki ilk 200 sonuç arasındaki sırasını kolayca bulun.</p>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Google Sıra Bulucu (20 Sayfa / 200 Sonuç)</h1>
+            <p class="text-gray-500 text-sm">Web sitenizin hedef anahtar kelimede Google'daki ilk 20 sayfa içerisindeki sıralamasını bloklar halinde inceleyin.</p>
         </div>
 
-        <!-- Arama Formu Kontrol Paneli -->
         <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-8">
             <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
@@ -69,11 +65,11 @@
         {% if searched %}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Sol Sütun: Google Arama Sonuç Listesi -->
-            <div class="lg:col-span-2 space-y-4">
+            <!-- Sol Sütun: Sayfa Sayfa Gruplanmış Sonuçlar -->
+            <div class="lg:col-span-2 space-y-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
                     <i class="fa-solid fa-list-ol text-blue-600"></i>
-                    <span>Google Arama Sonuçları (İlk 200)</span>
+                    <span>Google Sayfa Detayları</span>
                 </h3>
 
                 {% if status_message %}
@@ -82,22 +78,42 @@
                     </div>
                 {% endif %}
 
-                {% for item in results %}
-                <div class="bg-white p-5 rounded-xl border {% if item.is_target %}border-green-500 ring-2 ring-green-100 bg-green-50/30{% else %}border-gray-100{% endif %} shadow-sm flex items-start space-x-4 transition hover:shadow-md">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm {% if item.is_target %}bg-green-600 text-white{% else %}bg-blue-50 text-blue-600{% endif %}">
-                        {{ item.rank }}
+                <!-- 20 Sayfalık Döngü Başlangıcı -->
+                {% for page in results %}
+                <div class="bg-gray-100/70 p-4 rounded-xl border border-gray-200/80 mb-6">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-200">
+                        <span class="font-bold text-gray-700 text-sm bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">
+                            <i class="fa-solid fa-file-lines text-blue-500 mr-1"></i> {{ page.page_num }}. Sayfa
+                        </span>
+                        <span class="text-xs text-gray-500 font-medium">10 Sonuç</span>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-semibold text-blue-800 hover:underline text-base truncate">
-                            <a href="{{ item.url }}" target="_blank">{{ item.title }}</a>
-                        </h4>
-                        <p class="text-green-600 text-xs truncate mt-1 font-medium">{{ item.url }}</p>
+
+                    <div class="space-y-2">
+                        {% if page.items %}
+                            {% for item in page.items %}
+                            <div class="bg-white p-4 rounded-lg border {% if item.is_target %}border-green-500 ring-2 ring-green-100 bg-green-50/40{% else %}border-gray-100{% endif %} shadow-sm flex items-center space-x-4">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs {% if item.is_target %}bg-green-600 text-white{% else %}bg-blue-50 text-blue-600{% endif %}">
+                                    {{ item.global_rank }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-blue-800 hover:underline text-sm truncate">
+                                        <a href="{{ item.url }}" target="_blank">{{ item.title }}</a>
+                                    </h4>
+                                    <p class="text-green-600 text-xs truncate mt-0.5">{{ item.url }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="bg-white p-3 rounded-lg border border-dashed border-gray-200 text-center text-xs text-gray-400 italic">
+                                Bu sayfadan veri alınamadı veya organik sonuç bulunmuyor.
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
 
-            <!-- Sağ Sütun: Özet / Durum Kartı (Görseldeki mantıkla uyumlu) -->
+            <!-- Sağ Sütun: Özet Kartı -->
             <div class="lg:col-span-1">
                 <div class="sticky top-6">
                     <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 text-center">
@@ -107,24 +123,20 @@
                             </div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2">Tebrikler! Siteniz Bulundu</h3>
                             <p class="text-gray-500 text-sm mb-4">
-                                <span class="font-semibold text-gray-800">"{{ keyword }}"</span> kelimesinde web siteniz Google sıralamasında yer alıyor.
+                                <span class="font-semibold text-gray-800">"{{ keyword }}"</span> kelimesinde web siteniz listeleniyor.
                             </p>
                             <div class="bg-green-600 text-white rounded-lg py-4 px-6 text-3xl font-black tracking-wider">
                                 SIRA: {{ target_rank }}
                             </div>
-                            <p class="text-xs text-gray-400 mt-3">Yaklaşık {{ (target_rank / 10)|round(0, 'ceil')|int }}. Google Sayfası</p>
+                            <p class="text-xs text-gray-400 mt-3">Sıralama 200 sonuç üzerinden hesaplanmıştır.</p>
                         {% else %}
                             <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 text-4xl shadow-inner">
                                 <i class="fa-solid fa-thumbs-down"></i>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2">Siteniz Bulunamadı</h3>
                             <p class="text-gray-500 text-sm leading-relaxed">
-                                <span class="font-semibold text-gray-700">"{{ keyword }}"</span> kelimesinde ilk 200 sonuç arasında sitenize rastlanmamıştır.
+                                <span class="font-semibold text-gray-700">"{{ keyword }}"</span> kelimesinde aranan 20 sayfa (200 sonuç) arasında sitenize rastlanmamıştır.
                             </p>
-                            <div class="mt-6 border-t border-gray-100 pt-4 text-left">
-                                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Öneri</h4>
-                                <p class="text-xs text-gray-500 leading-relaxed">SEO optimizasyonunuzu güçlendirmek veya backlink profilinizi geliştirmek sıralamanızı yükseltebilir.</p>
-                            </div>
                         {% endif %}
                     </div>
                 </div>
