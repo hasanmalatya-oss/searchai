@@ -1,11 +1,12 @@
+import os
 import urllib.parse
 from flask import Flask, render_template, request
 import requests
 
 app = Flask(__name__)
 
-# 🔑 BURAYA SERPAPI'DEN ALDIĞINIZ ÜCRETSİZ API ANAHTARINI YAPIŞTIRIN
-SERPAPI_KEY = "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643"
+# API Anahtarınız (Hem doğrudan koda eklendi hem de güvenli çevre değişkeniyle uyumlu hale getirildi)
+SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643")
 
 def google_rank_checker(keyword, target_domain, max_results=200):
     results = []
@@ -13,9 +14,10 @@ def google_rank_checker(keyword, target_domain, max_results=200):
     clean_target = target_domain.replace("https://", "").replace("http://", "").replace("www.", "").lower().strip()
     target_rank = None
 
-    if not SERPAPI_KEY or SERPAPI_KEY == "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643":
+    if not SERPAPI_KEY or SERPAPI_KEY == "BURAYA_API_ANAHTARINIZI_YAZIN":
         return [], None
 
+    # 200 sonuç için 100'er adet getiren 2 sayfa isteği yapıyoruz (Çok hızlı ve stabil)
     pages = [0, 100]
 
     for start in pages:
@@ -23,8 +25,8 @@ def google_rank_checker(keyword, target_domain, max_results=200):
         params = {
             "q": keyword,
             "engine": "google",
-            "hl": "tr",
-            "gl": "tr",
+            "hl": "tr",        # Türkçe dil desteği
+            "gl": "tr",        # Türkiye arama sonuçları
             "num": 100,
             "start": start,
             "api_key": SERPAPI_KEY
@@ -83,8 +85,8 @@ def index():
         keyword = request.form.get("keyword", "").strip()
         searched = True
 
-        if not SERPAPI_KEY or SERPAPI_KEY == "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643":
-            status_message = "Lütfen önce app.py içerisindeki SERPAPI_KEY alanına ücretsiz API anahtarınızı ekleyin."
+        if not SERPAPI_KEY:
+            status_message = "API anahtarı bulunamadı."
         elif domain and keyword:
             results, target_rank = google_rank_checker(keyword, domain, 200)
             
@@ -93,7 +95,7 @@ def index():
             elif len(results) < 200:
                 status_message = f"Google üzerinde toplam {len(results)} sonuç bulunabildi."
 
-    # Doğru Yerleşim: Bu satır artık 'if' bloğunun dışında, böylece site sorunsuz açılacak.
+    # Girinti hatası tamamen düzeltildi, site artık sorunsuz açılacak
     return render_template(
         "index.html",
         results=results,
@@ -105,6 +107,5 @@ def index():
     )
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
