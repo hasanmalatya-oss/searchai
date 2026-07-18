@@ -5,8 +5,7 @@ import requests
 app = Flask(__name__)
 
 # 🔑 BURAYA SERPAPI'DEN ALDIĞINIZ ÜCRETSİZ API ANAHTARINI YAPIŞTIRIN
-# Örn: SERPAPI_KEY = "a1b2c3d4e5..."
-SERPAPI_KEY = "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643"
+SERPAPI_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN"
 
 def google_rank_checker(keyword, target_domain, max_results=200):
     results = []
@@ -17,8 +16,6 @@ def google_rank_checker(keyword, target_domain, max_results=200):
     if not SERPAPI_KEY or SERPAPI_KEY == "BURAYA_API_ANAHTARINIZI_YAZIN":
         return [], None
 
-    # SerpApi tek seferde 100 sonuç getirebilir. 200 sonuç için sadece 2 istek (start=0 ve start=100) atacağız.
-    # Böylece işlem 2 saniyede bitecek ve siteniz aşırı hızlı çalışacak.
     pages = [0, 100]
 
     for start in pages:
@@ -26,10 +23,10 @@ def google_rank_checker(keyword, target_domain, max_results=200):
         params = {
             "q": keyword,
             "engine": "google",
-            "hl": "tr",        # Türkçe Dil Desteği
-            "gl": "tr",        # Türkiye Lokasyonu
-            "num": 100,       # Sayfa başına sonuç sayısı
-            "start": start,    # Kaçıncı sonuçtan başlayacağı
+            "hl": "tr",
+            "gl": "tr",
+            "num": 100,
+            "start": start,
             "api_key": SERPAPI_KEY
         }
 
@@ -86,7 +83,7 @@ def index():
         keyword = request.form.get("keyword", "").strip()
         searched = True
 
-        if not SERPAPI_KEY or SERPAPI_KEY == "BURAYA_API_ANAHTARINIZI_YAZIN":
+        if not SERPAPI_KEY or SERPAPI_KEY == "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643":
             status_message = "Lütfen önce app.py içerisindeki SERPAPI_KEY alanına ücretsiz API anahtarınızı ekleyin."
         elif domain and keyword:
             results, target_rank = google_rank_checker(keyword, domain, 200)
@@ -96,16 +93,16 @@ def index():
             elif len(results) < 200:
                 status_message = f"Google üzerinde toplam {len(results)} sonuç bulunabildi."
 
-        # Arama sonuçlarını sayfadaki listeleme yapısına bozmadan aktarır
-        return render_template(
-            "index.html",
-            results=results,
-            target_rank=target_rank,
-            searched=searched,
-            domain=domain,
-            keyword=keyword,
-            status_message=status_message
-        )
+    # Doğru Yerleşim: Bu satır artık 'if' bloğunun dışında, böylece site sorunsuz açılacak.
+    return render_template(
+        "index.html",
+        results=results,
+        target_rank=target_rank,
+        searched=searched,
+        domain=domain,
+        keyword=keyword,
+        status_message=status_message
+    )
 
 if __name__ == "__main__":
     import os
