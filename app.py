@@ -13,7 +13,7 @@ def google_rank_checker(keyword, target_domain, max_results=200):
     clean_target = target_domain.replace("https://", "").replace("http://", "").replace("www.", "").lower().strip()
     target_rank = None
 
-    if not SERPAPI_KEY or SERPAPI_KEY == "BURAYA_API_ANAHTARINIZI_YAZIN":
+    if not SERPAPI_KEY or SERPAPI_KEY == "6c482eb3dd0f7542289036642f28d30497ef787fd83fce663e96c1af60d8a643":
         return [], None
 
     pages = [0, 100]
